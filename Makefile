@@ -12,7 +12,8 @@ BAUD  = 9600UL
 ## A directory for common include files and the simple USART library.
 ## If you move either the current folder or the Library folder, you'll 
 ##  need to change this path to match.
-LIBDIR = ../../AVR-Programming-Library
+#LIBDIR = ../../AVR-Programming-Library
+LIBDIR = /
 
 ##########------------------------------------------------------##########
 ##########                 Programmer Defaults                  ##########
