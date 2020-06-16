@@ -9,14 +9,14 @@
 //http://web.alfredstate.edu/faculty/weimandn/programming/lcd/ATmega328/LCD_code_gcc_4f.html
 
 // -------- Global Variables --------- //
-#define LED PB1
-#define LEDPORT PORTB
-#define LEDDDR DDRB
+#define LED PD6
+#define LEDPORT PORTD
+#define LEDDDR DDRD
 
-#define DEBUG       PB2
-#define DEBUGPORT   PORTB
-#define DEBUGDDR    DDRB
-#define DEBUG2      PB3
+#define DEBUG       PD7
+#define DEBUGPORT   PORTD
+#define DEBUGDDR    DDRD
+#define DEBUG2      PB0
 #define DEBUG2PORT  PORTB
 #define DEBUG2DDR   DDRB
 
@@ -25,20 +25,20 @@
 #define DISABLEDELAY 500
 #define FASTMESSAGE 3000
 
-#define BUTTON1 PD6
-#define BUTTON2 PD7
-#define BUTTON3 PB0
+#define BUTTON1 PB3
+#define BUTTON2 PB2
+#define BUTTON3 PB1
 
-#define BUTTON1PIN PIND
-#define BUTTON2PIN PIND 
+#define BUTTON1PIN PINB
+#define BUTTON2PIN PINB 
 #define BUTTON3PIN PINB
 
-#define BUTTON1PORT PORTD
-#define BUTTON2PORT PORTD 
+#define BUTTON1PORT PORTB
+#define BUTTON2PORT PORTB 
 #define BUTTON3PORT PORTB
 
-#define BUTTON1DDR DDRD 
-#define BUTTON2DDR DDRD
+#define BUTTON1DDR DDRB 
+#define BUTTON2DDR DDRB
 #define BUTTON3DDR DDRB
 
 #define RELAY     PD1
@@ -46,31 +46,31 @@
 #define RELAYDDR  DDRD 
 
 
-#define LCD_RW  PB5
-#define LCD_RS  PC0
-#define LCD_E   PC1
+#define LCD_RW  PC4
+#define LCD_RS  PC5
+#define LCD_E   PC3
 #define LCD_D4  PC2
-#define LCD_D5  PC3
-#define LCD_D6  PC4
-#define LCD_D7  PC5
+#define LCD_D5  PC1
+#define LCD_D6  PC0
+#define LCD_D7  PB5
 
-#define LCD_RW_DDR DDRB
+#define LCD_RW_DDR DDRC
 #define LCD_RS_DDR DDRC
 #define LCD_E_DDR  DDRC
 #define LCD_D4_DDR DDRC
 #define LCD_D5_DDR DDRC
 #define LCD_D6_DDR DDRC
-#define LCD_D7_DDR DDRC
+#define LCD_D7_DDR DDRB
 
-#define LCD_RW_PORT PORTB
+#define LCD_RW_PORT PORTC
 #define LCD_RS_PORT PORTC
 #define LCD_E_PORT  PORTC
 #define LCD_D4_PORT PORTC
 #define LCD_D5_PORT PORTC
 #define LCD_D6_PORT PORTC
-#define LCD_D7_PORT PORTC
+#define LCD_D7_PORT PORTB
 
-#define LCD_D7_PIN PINC // Busy flag
+#define LCD_D7_PIN PINB // Busy flag
 
 #define LCD_LINE1 0x00
 #define LCD_LINE2 0x40
@@ -136,6 +136,7 @@ void lcd_clear();
 void lcd_writeTop(uint8_t str[]);
 void lcd_writeBot(uint8_t str[]);
 void incrementMenu();
+void decrementMenu();
 void lcd_displayStandby(struct time *);
 void lcd_displaySetTime(struct time *);
 void lcd_displaySetAlarm(struct time *);
@@ -147,10 +148,13 @@ void lcd_displayDisableFailure();
 void lcd_displayEnableSucess();
 uint8_t button1();
 uint8_t button2();
+uint8_t button3();
 uint8_t button1_stream();
 void minutePassed(struct time *t);
 int incrementMinute(struct time *t);
 void incrementHour(struct time *t);
+int decrementMinute(struct time *t);
+void decrementHour(struct time *t);
 void setTimestring(char *timestring, struct time *t);
 uint8_t timesEqual(struct time *, struct time *);
 struct time *timeDif(struct time*, struct time *, struct time*);
@@ -280,6 +284,10 @@ int main(void){
       }
       if (button2()){
         change = 1;
+        decrementMenu();
+      }
+      if (button3()){
+        change = 1;
         if (menustate == SET_TIME_MENU){
           cli();
           editTimeState = EDIT_HOUR_TIMESTATE;
@@ -309,8 +317,16 @@ int main(void){
           incrementMinute(&clockTime);
         }
       }
-
       if (button2()){
+        change = 1;
+        if (editTimeState == EDIT_HOUR_TIMESTATE){
+          decrementHour(&clockTime);
+        } else if (editTimeState ==EDIT_MIN_TIMESTATE){
+          decrementMinute(&clockTime);
+        }
+      }
+
+      if (button3()){
         change = 1;
         if (editTimeState == EDIT_HOUR_TIMESTATE){
           editTimeState = EDIT_MIN_TIMESTATE;
@@ -334,7 +350,16 @@ int main(void){
         }
       }
 
-      if (button2()){ 
+      if (button2()){
+        change = 1;
+        if (editTimeState == EDIT_HOUR_TIMESTATE){
+          decrementHour(&powerOffTime);
+        } else if (editTimeState == EDIT_MIN_TIMESTATE){
+          decrementMinute(&powerOffTime);
+        }
+      }
+
+      if (button3()){ 
         change = 1;
         if (editTimeState == EDIT_HOUR_TIMESTATE){
           editTimeState = EDIT_MIN_TIMESTATE;
@@ -358,7 +383,17 @@ int main(void){
         timeSum(&powerOffTime, &powerOffInterval, &powerOnTime);
       }
 
-      if (button2()){ 
+      if (button2()){
+        change = 1;
+        if (editTimeState == EDIT_HOUR_TIMESTATE){
+          decrementHour(&powerOffInterval);
+        } else if (editTimeState == EDIT_MIN_TIMESTATE){
+          decrementMinute(&powerOffInterval);
+        }
+        timeSum(&powerOffTime, &powerOffInterval, &powerOnTime);
+      }
+
+      if (button3()){ 
         change = 1;
         if (editTimeState == EDIT_HOUR_TIMESTATE){
           editTimeState = EDIT_MIN_TIMESTATE;
@@ -405,7 +440,7 @@ int main(void){
         }
       } 
       
-      if (button2()){
+      if (button3()){
         change = 1;
         system_state = STANDBY_STATE;
       }
@@ -519,6 +554,26 @@ void incrementMenu(){
   }
 }
 
+void decrementMenu(){
+  switch (menustate){
+    case SET_TIME_MENU:
+      menustate = SET_DISABLE_MENU;
+      return;
+    case SET_ALARM_MENU:
+      menustate = SET_TIME_MENU;
+      return;
+    case SET_DOWNTIME_MENU:
+      menustate = SET_ALARM_MENU;
+      return;
+    case SET_DISABLE_MENU:
+      menustate = SET_DOWNTIME_MENU;
+      return;
+    default:
+      //something weird
+      return;
+  }
+}
+
 
 
 
@@ -539,13 +594,30 @@ int incrementMinute(struct time *t){
   }
   t->minute += 1;
   return 0;
-
 }
+
+int decrementMinute(struct time *t){
+  if (t->minute == 0){
+    t->minute = 59;
+    return 1;
+  }
+  t->minute -= 1;
+  return 0;
+}
+
 void incrementHour(struct time *t){
   if (t->hour == 23){
     t->hour = 0;
   } else {
     t->hour += 1;
+  }
+}
+
+void decrementHour(struct time *t){
+  if (t->hour == 0){
+    t->hour = 23;
+  } else {
+    t->hour -= 1;
   }
 }
 
@@ -567,6 +639,19 @@ uint8_t button2(){
     _delay_us(DEBOUNCETIME);
     if (bit_is_clear(BUTTON2PIN, BUTTON2)){
       while (bit_is_clear(BUTTON2PIN, BUTTON2)){
+        _delay_ms(1);  
+      }
+      return 1;
+    }
+  } 
+  return 0;
+}
+
+uint8_t button3(){
+  if (bit_is_clear(BUTTON3PIN, BUTTON3)){
+    _delay_us(DEBOUNCETIME);
+    if (bit_is_clear(BUTTON3PIN, BUTTON3)){
+      while (bit_is_clear(BUTTON3PIN, BUTTON3)){
         _delay_ms(1);  
       }
       return 1;
