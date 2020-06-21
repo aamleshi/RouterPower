@@ -231,9 +231,9 @@ ISR (TIMER1_COMPA_vect)
   }
 
   if (powerState){
-    RELAYPORT |= (1<<RELAY);
-  } else {
     RELAYPORT &= ~(1<<RELAY);
+  } else {
+    RELAYPORT |= (1<<RELAY);
   }
 }
 
